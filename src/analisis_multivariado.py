@@ -20,7 +20,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -210,9 +209,6 @@ Interpretación:
     # ----------------------------------------------------------
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-    orden_tipo  = df.groupby("Tipo_entrenamiento")["Calorías_quemadas"].median().sort_values(ascending=False).index
-    orden_nivel = ["Bajo", "Medio", "Alto"]
-
     df.boxplot(column="Calorías_quemadas", by="Tipo_entrenamiento",
                ax=axes[0], patch_artist=True,
                boxprops=dict(facecolor=COLOR_PPAL, alpha=0.7),
@@ -332,8 +328,6 @@ def matriz_correlacion(df: pd.DataFrame) -> pd.DataFrame:
     # Heatmap de la matriz de correlación
     # ----------------------------------------------------------
     fig, ax = plt.subplots(figsize=(13, 10))
-
-    mascara = np.triu(np.ones_like(corr, dtype=bool), k=1)   # Muestro triángulo inferior + diagonal
 
     sns.heatmap(
         corr,
