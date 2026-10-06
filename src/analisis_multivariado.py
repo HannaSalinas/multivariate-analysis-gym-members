@@ -138,7 +138,8 @@ Interpretación:
     de 24.9, en el límite superior del rango normal (≤24.9).
   • Las frecuencias cardíacas (Máx_BPM ≈ 180, Promedio ≈ 144, Reposo ≈ 62)
     corresponden a perfiles de ejercicio de intensidad media-alta.
-  • Las Calorías_quemadas presentan el CV más alto (30.2 %), lo que refleja
+  • Las Calorías_quemadas presentan el CV más alto entre las variables de
+    entrenamiento (30.2 %; solo la Edad lo supera con 31.4 %), lo que refleja
     alta variabilidad entre sesiones y tipos de entrenamiento.
   • El Porcentaje_grasa tiene asimetría NEGATIVA (-0.63), indicando que la
     mayoría de los miembros tiene porcentaje de grasa medio-alto, con pocos
