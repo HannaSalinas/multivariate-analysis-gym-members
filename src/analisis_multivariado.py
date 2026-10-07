@@ -14,10 +14,12 @@
 # numéricas a 4 componentes conservando la máxima varianza.
 # ==============================================================
 
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -26,7 +28,11 @@ from sklearn.decomposition import PCA
 # PARÁMETROS GLOBALES
 # ==============================================================
 
-RUTA_DATOS   = "Miembros_gimnasio.xlsx"   # Archivo de entrada
+RAIZ          = Path(__file__).resolve().parent.parent
+RUTA_DATOS    = RAIZ / "data" / "Miembros_gimnasio.xlsx"  # Archivo de entrada
+DIR_FIGURAS   = RAIZ / "figures"                          # Carpeta de salida
+# Con --mostrar cada gráfica se abre en una ventana además de guardarse
+MOSTRAR_GRAFICAS = "--mostrar" in sys.argv
 N_COMPONENTES = 4                          # Componentes PCA objetivo
 SEMILLA       = 42                         # Semilla para reproducibilidad
 COLOR_PPAL    = "#2563EB"                  # Azul corporativo para gráficas
@@ -37,6 +43,16 @@ PALETTE_CAT   = "Set2"                     # Paleta para variables categóricas
 # ==============================================================
 # FUNCIÓN AUXILIAR — Separador visual en consola
 # ==============================================================
+
+def guardar_figura(nombre: str) -> None:
+    """Guardo la figura actual en figures/ y la muestro si se pidió --mostrar."""
+    DIR_FIGURAS.mkdir(exist_ok=True)
+    plt.savefig(DIR_FIGURAS / nombre, dpi=150, bbox_inches="tight")
+    if MOSTRAR_GRAFICAS:
+        plt.show(block=False)
+        plt.pause(2)
+    plt.close()
+
 
 def separador(titulo: str) -> None:
     """Imprimo un separador visual con el título del numeral."""
@@ -50,7 +66,7 @@ def separador(titulo: str) -> None:
 # CARGA Y LIMPIEZA DE DATOS
 # ==============================================================
 
-def cargar_datos(ruta: str) -> pd.DataFrame:
+def cargar_datos(ruta: Path) -> pd.DataFrame:
     """
     Cargo el archivo Excel y realizo una limpieza mínima:
     elimino espacios en los nombres de columnas, corrijo el nombre
@@ -122,7 +138,8 @@ Interpretación:
     de 24.9, en el límite superior del rango normal (≤24.9).
   • Las frecuencias cardíacas (Máx_BPM ≈ 180, Promedio ≈ 144, Reposo ≈ 62)
     corresponden a perfiles de ejercicio de intensidad media-alta.
-  • Las Calorías_quemadas presentan el CV más alto (30.2 %), lo que refleja
+  • Las Calorías_quemadas presentan el CV más alto entre las variables de
+    entrenamiento (30.2 %; solo la Edad lo supera con 31.4 %), lo que refleja
     alta variabilidad entre sesiones y tipos de entrenamiento.
   • El Porcentaje_grasa tiene asimetría NEGATIVA (-0.63), indicando que la
     mayoría de los miembros tiene porcentaje de grasa medio-alto, con pocos
@@ -154,8 +171,7 @@ Interpretación:
     fig.suptitle("Distribuciones de Variables Numéricas — Miembros Gimnasio",
                  fontsize=14, fontweight="bold", y=1.01)
     plt.tight_layout()
-    plt.savefig("1_histogramas_numericas.png", dpi=150, bbox_inches="tight")
-    plt.show(block=False); plt.pause(2); plt.close()
+    guardar_figura("1_histogramas_numericas.png")
     print("\n[Gráfica guardada] 1_histogramas_numericas.png")
 
     # ----------------------------------------------------------
@@ -186,17 +202,13 @@ Interpretación:
     fig.suptitle("Distribución de Variables Categóricas — Miembros Gimnasio",
                  fontsize=13, fontweight="bold")
     plt.tight_layout()
-    plt.savefig("1_barras_categoricas.png", dpi=150, bbox_inches="tight")
-    plt.show(block=False); plt.pause(2); plt.close()
+    guardar_figura("1_barras_categoricas.png")
     print("[Gráfica guardada] 1_barras_categoricas.png")
 
     # ----------------------------------------------------------
     # 1.4 Gráfica 3 — Boxplots: Calorías quemadas por Tipo de entrenamiento
     # ----------------------------------------------------------
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-
-    orden_tipo  = df.groupby("Tipo_entrenamiento")["Calorías_quemadas"].median().sort_values(ascending=False).index
-    orden_nivel = ["Bajo", "Medio", "Alto"]
 
     df.boxplot(column="Calorías_quemadas", by="Tipo_entrenamiento",
                ax=axes[0], patch_artist=True,
@@ -219,8 +231,7 @@ Interpretación:
     fig.suptitle("Calorías quemadas según tipo de entrenamiento y nivel de experiencia",
                  fontsize=12, fontweight="bold")
     plt.tight_layout()
-    plt.savefig("1_boxplots_calorias.png", dpi=150, bbox_inches="tight")
-    plt.show(block=False); plt.pause(2); plt.close()
+    guardar_figura("1_boxplots_calorias.png")
     print("[Gráfica guardada] 1_boxplots_calorias.png")
 
     # ----------------------------------------------------------
@@ -240,8 +251,7 @@ Interpretación:
     ax.grid(linestyle="--", alpha=0.4)
 
     plt.tight_layout()
-    plt.savefig("1_scatter_imc_grasa.png", dpi=150, bbox_inches="tight")
-    plt.show(block=False); plt.pause(2); plt.close()
+    guardar_figura("1_scatter_imc_grasa.png")
     print("[Gráfica guardada] 1_scatter_imc_grasa.png")
 
     # ----------------------------------------------------------
@@ -320,8 +330,6 @@ def matriz_correlacion(df: pd.DataFrame) -> pd.DataFrame:
     # ----------------------------------------------------------
     fig, ax = plt.subplots(figsize=(13, 10))
 
-    mascara = np.triu(np.ones_like(corr, dtype=bool), k=1)   # Muestro triángulo inferior + diagonal
-
     sns.heatmap(
         corr,
         annot=True,
@@ -342,8 +350,7 @@ def matriz_correlacion(df: pd.DataFrame) -> pd.DataFrame:
     ax.tick_params(axis="y", rotation=0,  labelsize=8.5)
 
     plt.tight_layout()
-    plt.savefig("2_heatmap_correlacion.png", dpi=150, bbox_inches="tight")
-    plt.show(block=False); plt.pause(2); plt.close()
+    guardar_figura("2_heatmap_correlacion.png")
     print("\n[Gráfica guardada] 2_heatmap_correlacion.png")
 
     print("""
@@ -460,8 +467,7 @@ def analisis_pca(df: pd.DataFrame, n_comp: int = N_COMPONENTES) -> None:
     fig.suptitle("Análisis de Componentes Principales — Miembros Gimnasio",
                  fontsize=13, fontweight="bold")
     plt.tight_layout()
-    plt.savefig("3_scree_plot_pca.png", dpi=150, bbox_inches="tight")
-    plt.show(block=False); plt.pause(2); plt.close()
+    guardar_figura("3_scree_plot_pca.png")
     print("\n[Gráfica guardada] 3_scree_plot_pca.png")
 
     # ----------------------------------------------------------
@@ -502,8 +508,7 @@ def analisis_pca(df: pd.DataFrame, n_comp: int = N_COMPONENTES) -> None:
     ax.set_ylabel("Variable original", fontsize=10)
     ax.tick_params(axis="y", rotation=0, labelsize=9)
     plt.tight_layout()
-    plt.savefig("3_heatmap_loadings.png", dpi=150, bbox_inches="tight")
-    plt.show(block=False); plt.pause(2); plt.close()
+    guardar_figura("3_heatmap_loadings.png")
     print("[Gráfica guardada] 3_heatmap_loadings.png")
 
     # ----------------------------------------------------------
@@ -533,8 +538,7 @@ def analisis_pca(df: pd.DataFrame, n_comp: int = N_COMPONENTES) -> None:
     ax.grid(linestyle="--", alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig("3_biplot_pca.png", dpi=150, bbox_inches="tight")
-    plt.show(block=False); plt.pause(2); plt.close()
+    guardar_figura("3_biplot_pca.png")
     print("[Gráfica guardada] 3_biplot_pca.png")
 
     # ----------------------------------------------------------
@@ -558,8 +562,7 @@ def analisis_pca(df: pd.DataFrame, n_comp: int = N_COMPONENTES) -> None:
     ax.grid(linestyle="--", alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig("3_scatter_pca_tipo.png", dpi=150, bbox_inches="tight")
-    plt.show(block=False); plt.pause(2); plt.close()
+    guardar_figura("3_scatter_pca_tipo.png")
     print("[Gráfica guardada] 3_scatter_pca_tipo.png")
 
     # ----------------------------------------------------------
@@ -629,5 +632,5 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 60)
     print("  Análisis completado. Todas las gráficas han sido")
-    print("  guardadas como archivos PNG en el directorio actual.")
+    print(f"  guardadas como archivos PNG en {DIR_FIGURAS}.")
     print("=" * 60)
